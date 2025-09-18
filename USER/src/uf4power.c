@@ -1,254 +1,170 @@
-#include "uf4power.h"
-#include "ina226.h"
-#include "key.h"
-#include "stdio.h"
+// control.c
 #include "main.h"
-#include "widgets/lv_label.h"
+#include "pid.h"
+#include "key.h"
+#include "lvgl.h"
+#include "uf4power.h"
+
+#include "ina226.h"
 #include "ui_Screen1.h"
+#include <stdio.h>
+#include <math.h>
 
-/*========================= 全局变量定义 =========================*/
-float target_voltage = 12.0f;
-float target_current = 5.0f;
+// 编辑位：3位整数 + 1位小数 -> 格式 "xx.x"（支持 0..26.5）
+static int edit_pos = 0; // 0..3 (0: tens, 1: units, 2: ones? 看下实现) 我们定义：pos0=十位(10s), pos1=个位(1s), pos2=小数位(0.1s)
+static float V_setpoint = 12.0f;
+static float I_setpoint = 2.0f;
 
-uint16_t DAC_voltage = 0;
-uint16_t DAC_current = 0;
+// PID 使能标志
+static volatile uint8_t voltage_pid_enabled = 0;
+static volatile uint8_t current_pid_enabled = 0;
 
-int digit_index = 0;  // 当前选择位 0=十位,1=个位,2=十分位,3=百分位
-uint8_t mode = 0;     // 当前模式 0=电压, 1=电流
+// 上次更新 tick
+static uint32_t last_control_tick = 0;
 
-float step_value[4] = {10.0f, 1.0f, 0.1f, 0.01f};
-
-uint8_t output_enabled = 0;  // 输出使能标志
-
-// 添加变量来保存PID调整后的值
-float adjusted_voltage = 0;
-float adjusted_current = 0;
-
-/*========================= 函数实现 =========================*/
-
-/**
- * @brief 初始化UF4电源控制模块
- */
-void UF4Power_Init(void)
-{
-    // 初始化PID控制器
-    VPID_init();
-    IPID_init();
-
-    // 初始化调整值为目标值
-    adjusted_voltage = target_voltage;
-    adjusted_current = target_current;
-
-    // 设置初始DAC值
-    UpdateDAC();
-
-    printf("UF4 Power Control Initialized\n");
+// helper: clamp
+static float clampf(float v, float lo, float hi) {
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
 }
 
-/**
- * @brief 更新DAC输出值
- */
-void UpdateDAC(void)
+// 映射：电压(0..MAX_VOLTAGE) -> DAC (0..4095) 按你要求：0V -> 4095, MAX_VOLTAGE -> 0
+static uint32_t voltage_to_dac(float v) {
+    v = clampf(v, 0.0f, MAX_VOLTAGE);
+    float ratio = v / MAX_VOLTAGE;
+    float dacf = (1.0f - ratio) * DAC_MAX;
+    return (uint32_t)roundf(dacf);
+}
+
+// 映射：电流(0..MAX_CURRENT) -> DAC (0..4095) 0A->0, MAX_CURRENT->4095
+static uint32_t current_to_dac(float i) {
+    i = clampf(i, 0.0f, MAX_CURRENT);
+    float ratio = i / MAX_CURRENT;
+    float dacf = ratio * DAC_MAX;
+    return (uint32_t)roundf(dacf);
+}
+
+// 将指定值写入 DAC（12-bit right aligned）
+static void dac_write_voltage(uint32_t value) {
+    if (value > 4095) value = 4095;
+    HAL_DAC_SetValue(&hdac, DAC_VOLTAGE_CHANNEL, DAC_ALIGN_12B_R, value);
+    // 如果需要，启动通道（如果尚未启动）：
+    // HAL_DAC_Start(&hdac, DAC_VOLTAGE_CHANNEL); // 确保在 init 中已启动
+}
+
+static void dac_write_current(uint32_t value) {
+    if (value > 4095) value = 4095;
+    HAL_DAC_SetValue(&hdac, DAC_CURRENT_CHANNEL, DAC_ALIGN_12B_R, value);
+}
+
+// 根据 edit_pos, up/down 修改 V_setpoint
+static void edit_voltage_by_delta(int delta)
 {
-    // 限制电压和电流在有效范围内
-    if (target_voltage > MAX_VOLTAGE) target_voltage = MAX_VOLTAGE;
-    if (target_voltage < 0) target_voltage = 0;
+    // pos 0: 十位（10s）； pos1: 个位（1s）； pos2: 小数(0.1)
+    int tens = ((int)floorf(V_setpoint)) / 10;
+    int ones = ((int)floorf(V_setpoint)) % 10;
+    int tenths = (int)roundf((V_setpoint - floorf(V_setpoint)) * 10.0f) % 10;
 
-    if (target_current > MAX_CURRENT) target_current = MAX_CURRENT;
-    if (target_current < 0) target_current = 0;
-
-    // 限制调整后的值
-    if (adjusted_voltage > MAX_VOLTAGE) adjusted_voltage = MAX_VOLTAGE;
-    if (adjusted_voltage < 0) adjusted_voltage = 0;
-
-    if (adjusted_current > MAX_CURRENT) adjusted_current = MAX_CURRENT;
-    if (adjusted_current < 0) adjusted_current = 0;
-
-    // 计算DAC值 (根据您的描述：4095对应0V/10A)
-    // 电压: 4095 = 0V, 0 = 26V
-    DAC_voltage = (uint16_t)((MAX_VOLTAGE - adjusted_voltage) * DAC_MAX / MAX_VOLTAGE);
-    // 电流: 0 = 0A, 4095 = 10A
-    DAC_current = (uint16_t)(adjusted_current * DAC_MAX / MAX_CURRENT);
-
-    // 设置DAC输出
-    if (output_enabled) {
-        HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
-        HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
-        HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, DAC_voltage);
-        HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, DAC_current);
-
+    if (edit_pos == 0) {
+        tens += delta;
+    } else if (edit_pos == 1) {
+        ones += delta;
     } else {
-        // 输出关闭时，设置DAC为0V和0A
-        HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
-        HAL_DAC_Start(&hdac, DAC_CHANNEL_2);
-        HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, 0); // 0V
-        HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, 0);       // 0A
+        tenths += delta;
+    }
+    int new_int = tens*10 + ones;
+    float new_v = new_int + (tenths * 0.1f);
+    new_v = clampf(new_v, 0.0f, MAX_VOLTAGE);
+    V_setpoint = new_v;
+}
 
+// 左右切位
+static void move_edit_pos(int dir) {
+    // dir: +1 -> right, -1 -> left
+    if (dir > 0) {
+        edit_pos++;
+        if (edit_pos > 2) edit_pos = 0;
+    } else {
+        if (edit_pos == 0) edit_pos = 2;
+        else edit_pos--;
     }
 }
 
-/**
- * @brief 更新LVGL界面显示
- */
-void UpdateLVGLLabels(void)
-{
+// 显示设定值到 lvgl label（比如 "12.3"）
+static void show_setpoints_to_ui(void) {
     char buf[16];
-
-    // 更新目标电压显示
-    sprintf(buf, "%05.2f", target_voltage);
+    snprintf(buf, sizeof(buf), "%05.2f", V_setpoint);
     lv_label_set_text(VsetLabel, buf);
-
-    // 更新目标电流显示
-    sprintf(buf, "%05.2f", target_current);
+    snprintf(buf, sizeof(buf), "%05.2f", I_setpoint);
     lv_label_set_text(IsetLabel, buf);
-
-    // 更新实际电压显示
-    float actual_voltage = INA226_BusVoltage();
-    sprintf(buf, "%05.2f", actual_voltage);
-    lv_label_set_text(VoutLabel, buf);
-
-    // 更新实际电流显示
-    float actual_current = INA226_Current();
-    sprintf(buf, "%05.2f", actual_current);
-    lv_label_set_text(IoutLabel, buf);
-
-    // 更新功率显示
-    float power = actual_voltage * actual_current;
-    sprintf(buf, "%05.2f", power);
-    lv_label_set_text(PoutLabel, buf);
 }
 
-/**
- * @brief 处理按键输入
- */
-void ProcessKeys(void)
+// 控制定时器回调（由 lvgl 定时器或 HAL 定时器每 CONTROL_PERIOD_MS 调用一次）
+// - 读取 INA226
+// - 运行 PID（如果 enabled）
+// - 写 DAC
+// - 更新 UI 标签
+// control_timer_cb 简化版
+static void control_timer_cb(lv_timer_t * timer)
 {
-    static uint32_t last_key_time = 0;
-    uint32_t current_time = HAL_GetTick();
+    (void) timer;
 
-    // 消抖处理
-    if (current_time - last_key_time < 100) {
-        return;
+    // 先处理按键事件采样
+    process_key_events();
+
+    // 按键编辑设定电压
+    if (RIGHT_KEY_pressed) { move_edit_pos(+1); RIGHT_KEY_pressed = 0; }
+    if (LEFT_KEY_pressed)  { move_edit_pos(-1); move_edit_pos(-1); LEFT_KEY_pressed = 0; } // 左移
+    if (UP_KEY_pressed)    { edit_voltage_by_delta(+1); UP_KEY_pressed = 0; }
+    if (DOWN_KEY_pressed)  { edit_voltage_by_delta(-1); DOWN_KEY_pressed = 0; }
+
+    // RECOVER_KEY 按下 -> 直接输出设定值电压
+    if (RECOVER_KEY_pressed) {
+        RECOVER_KEY_pressed = 0;
+        OUTPUT_ENABLE();
+        uint32_t dacv = voltage_to_dac(V_setpoint);
+        dac_write_voltage(dacv);
     }
 
-    // 切换模式：电压/电流
-    if (PAUSED_KEY_pressed) {
-        PAUSED_KEY_pressed = 0;
-        mode = !mode;  // 在电压和电流模式间切换
-        last_key_time = current_time;
-        printf("Mode switched to %s\n", mode ? "Current" : "Voltage");
-    }
-
-    // 开启/关闭输出
+    // FALSE_KEY: 输出安全值（0V）
     if (FALSE_KEY_pressed) {
         FALSE_KEY_pressed = 0;
-        output_enabled = !output_enabled;
-
-        if (output_enabled) {
-            lv_obj_add_state(ui_Switch1, LV_STATE_CHECKED);
-            HAL_GPIO_WritePin(OUT_CTRL_GPIO_Port, OUT_CTRL_Pin, GPIO_PIN_SET);
-            printf("Output Enabled\n");
-        } else {
-            lv_obj_clear_state(ui_Switch1, LV_STATE_CHECKED);
-            HAL_GPIO_WritePin(OUT_CTRL_GPIO_Port, OUT_CTRL_Pin, GPIO_PIN_RESET);
-            printf("Output Disabled\n");
-        }
-
-        UpdateDAC();  // 更新DAC输出
-        last_key_time = current_time;
+        OUTPUT_DISABLE();
+        dac_write_voltage(4095); // 0V 对应 DAC=4095
     }
 
-    // 切换数字位选择
-    if (RIGHT_KEY_pressed) {
-        RIGHT_KEY_pressed = 0;
-        digit_index = (digit_index + 1) % 4;
-        last_key_time = current_time;
-        printf("Digit index: %d\n", digit_index);
-    }
+    // 实时更新 UI
+    float Vout = INA226_BusVoltage();  // 测量电压
+    float Iout = INA226_Current();     // 测量电流
+    float Pout = INA226_Power();       // 测量功率
 
-    if (LEFT_KEY_pressed) {
-        LEFT_KEY_pressed = 0;
-        digit_index = (digit_index + 3) % 4;  // 避免负数
-        last_key_time = current_time;
-        printf("Digit index: %d\n", digit_index);
-    }
+    char buf1[16], buf2[16], buf3[16];
+    snprintf(buf1, sizeof(buf1), "%05.2f", Vout);
+    lv_label_set_text(VoutLabel, buf1);
+    snprintf(buf2, sizeof(buf2), "%05.2f", Iout);
+    lv_label_set_text(IoutLabel, buf2);
+    snprintf(buf3, sizeof(buf3), "%05.2f", Pout);
+    lv_label_set_text(PoutLabel, buf3);
 
-    // 增加数值
-    if (UP_KEY_pressed) {
-        UP_KEY_pressed = 0;
-        if (mode == 0) {  // 电压模式
-            target_voltage += step_value[digit_index];
-            if (target_voltage > MAX_VOLTAGE) target_voltage = MAX_VOLTAGE;
-            adjusted_voltage = target_voltage; // 同时更新调整值
-        } else {  // 电流模式
-            target_current += step_value[digit_index];
-            if (target_current > MAX_CURRENT) target_current = MAX_CURRENT;
-            adjusted_current = target_current; // 同时更新调整值
-        }
-        UpdateDAC(); // 更新DAC输出
-        UpdateLVGLLabels();
-        last_key_time = current_time;
-        printf("Value increased\n");
-    }
-
-    // 减少数值
-    if (DOWN_KEY_pressed) {
-        DOWN_KEY_pressed = 0;
-        if (mode == 0) {  // 电压模式
-            target_voltage -= step_value[digit_index];
-            if (target_voltage < 0) target_voltage = 0;
-            adjusted_voltage = target_voltage; // 同时更新调整值
-        } else {  // 电流模式
-            target_current -= step_value[digit_index];
-            if (target_current < 0) target_current = 0;
-            adjusted_current = target_current; // 同时更新调整值
-        }
-        UpdateDAC(); // 更新DAC输出
-        UpdateLVGLLabels();
-        last_key_time = current_time;
-        printf("Value decreased\n");
-    }
+    // 显示设定值
+    show_setpoints_to_ui();
 }
 
-/**
- * @brief 控制循环 - PID调节
- */
-void ControlLoop(void)
+void Control_Init(void)
 {
-    static uint32_t last_control_time = 0;
-    uint32_t current_time = HAL_GetTick();
+    // 启动 DAC 通道（CubeMX 生成 hdac，确保在 MX_DAC_Init() 中已 HAL_DAC_Start）
+    HAL_DAC_Start(&hdac, DAC_VOLTAGE_CHANNEL);
+    HAL_DAC_Start(&hdac, DAC_CURRENT_CHANNEL);
 
-    // 每100ms执行一次控制循环
-    if (current_time - last_control_time < 100) {
-        return;
-    }
+    // 初始写入（使输出为 0V, 0A）
+    dac_write_voltage(voltage_to_dac(0.0f)); // 0V -> 4095
+    dac_write_current(current_to_dac(0.0f));
 
-    last_control_time = current_time;
+    // Ensure output disabled initially
+    OUTPUT_DISABLE();
 
-    if (output_enabled) {
-        // 读取实际值
-        float actual_voltage = INA226_BusVoltage();
-        float actual_current = INA226_Current();
-
-        // 电压PID控制
-        float voltage_correction = VPID_realize(target_voltage, actual_voltage);
-        // 使用PID输出调整电压值
-        adjusted_voltage = target_voltage + voltage_correction;
-
-        // 电流PID控制 (仅在电流不为0时启用)
-        if (target_current > 0.01f) {  // 避免空载时的电流控制
-            float current_correction = IPID_realize(target_current, actual_current);
-            // 使用PID输出调整电流值
-            adjusted_current = target_current + current_correction;
-        } else {
-            // 空载情况下使用目标电流
-            adjusted_current = target_current;
-        }
-
-        // 更新DAC输出
-        UpdateDAC();
-    }
-
-    // 更新显示
-    UpdateLVGLLabels();
+    // 创建 LVGL 定时器，周期 CONTROL_PERIOD_MS
+    lv_timer_create(control_timer_cb, CONTROL_PERIOD_MS, NULL);
 }
+

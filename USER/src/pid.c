@@ -25,7 +25,7 @@ void VPID_init()
 void IPID_init()
 {
     printf("PID_init begin \n");
-    pidi.SetCurrent= 2.0;		  	// 设定的预期电流值，默认5A
+    pidi.SetCurrent= 2.0;		  	// 设定的预期电流值
     pidi.ActualCurrent= 0.0;
     pidi.current= 0.0;			    // 输出电流值
     pidi.err= 0.0;				    // 当前次实际与理想的偏差
@@ -37,16 +37,26 @@ void IPID_init()
     printf("iPID_init end \n");
 }
 
-float VPID_realize( float v, float v_r)
+float VPID_realize(float set_v, float act_v)
 {
-    pidv.SetVoltage = v;			// 固定值传入
-    pidv.ActualVoltage = v_r;	// 实际传入
-    pidv.err = pidv.SetVoltage - pidv.ActualVoltage;	//计算偏差
-    pidv.integral += pidv.err;						//积分求和
-    pidv.result = pidv.Kp * pidv.err + pidv.Ki * pidv.integral + pidv.Kd * ( pidv.err - pidv.err_last);//位置式公式
-    pidv.err_last = pidv.err;				//留住上一次误差
-    return pidv.result;
+    pidv.SetVoltage = set_v;
+    pidv.ActualVoltage = act_v;
+
+    // 计算偏差 = 目标 - 实测
+    pidv.err = pidv.SetVoltage - pidv.ActualVoltage;
+
+    // 位置式 PID
+    float p_term = pidv.Kp * pidv.err;
+    pidv.integral += pidv.err;        // 积分累加
+    float i_term = pidv.Ki * pidv.integral;
+    float d_term = pidv.Kd * (pidv.err - pidv.err_last);
+
+    float result = p_term + i_term + d_term;
+
+    pidv.err_last = pidv.err;
+    return result;
 }
+
 float IPID_realize( float i, float i_r)
 {
     pidi.SetCurrent = i;			// 固定值传入
