@@ -17,7 +17,7 @@ void VPID_init()
     pidv.err_last=0.0;			    // 上一次的偏差
     pidv.voltage= 0.0;			    // 控制电压值
     pidv.integral= 0.0;			  	// 积分值
-    pidv.Kp= 0.2;				    // 比例系数
+    pidv.Kp= 0.2;				    // 1
     pidv.Ki= 0.15;				    // 积分系数
     pidv.Kd= 0.2;				    // 微分系数
     printf("vPID_init end \n");

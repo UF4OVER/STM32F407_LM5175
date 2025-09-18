@@ -105,41 +105,97 @@ static void show_setpoints_to_ui(void) {
 // - 运行 PID（如果 enabled）
 // - 写 DAC
 // - 更新 UI 标签
-// control_timer_cb 简化版
-static void control_timer_cb(lv_timer_t * timer)
+void control_timer_cb(lv_timer_t * timer)
 {
     (void) timer;
-
     // 先处理按键事件采样
     process_key_events();
 
-    // 按键编辑设定电压
+    // 处理一按事件（edge）
     if (RIGHT_KEY_pressed) { move_edit_pos(+1); RIGHT_KEY_pressed = 0; }
-    if (LEFT_KEY_pressed)  { move_edit_pos(-1); move_edit_pos(-1); LEFT_KEY_pressed = 0; } // 左移
+    if (LEFT_KEY_pressed)  { move_edit_pos(-1); LEFT_KEY_pressed = 0; }
     if (UP_KEY_pressed)    { edit_voltage_by_delta(+1); UP_KEY_pressed = 0; }
     if (DOWN_KEY_pressed)  { edit_voltage_by_delta(-1); DOWN_KEY_pressed = 0; }
 
-    // RECOVER_KEY 按下 -> 直接输出设定值电压
+    // RECOVER_KEY 按下 -> 启动电压 PID 并使能输出
     if (RECOVER_KEY_pressed) {
         RECOVER_KEY_pressed = 0;
+        // 把 pidv.voltage 初始置为当前测得电压以避免突变
+        pidv.voltage = INA226_BusVoltage();
+        pidv.integral = 0.0f;
+        pidv.err = 0.0f;
+        pidv.err_last = 0.0f;
+        voltage_pid_enabled = 1;
         OUTPUT_ENABLE();
-        uint32_t dacv = voltage_to_dac(V_setpoint);
-        dac_write_voltage(dacv);
     }
 
-    // FALSE_KEY: 输出安全值（0V）
+    // PAUSED_KEY 可以用来停 PID（短按切换）
+    if (PAUSED_KEY_pressed) {
+        PAUSED_KEY_pressed = 0;
+        voltage_pid_enabled = 0;
+        current_pid_enabled = 0;
+        OUTPUT_DISABLE();
+    }
+
+    // FALSE_KEY: 直接把 DAC 设为某个安全值（如 0 输出）
     if (FALSE_KEY_pressed) {
         FALSE_KEY_pressed = 0;
+        voltage_pid_enabled = 0;
+        current_pid_enabled = 0;
         OUTPUT_DISABLE();
-        dac_write_voltage(4095); // 0V 对应 DAC=4095
+        dac_write_voltage(4095); // 对应 0V
+        dac_write_current(0);
     }
 
-    // 实时更新 UI
-    float Vout = INA226_BusVoltage();  // 测量电压
-    float Iout = INA226_Current();     // 测量电流
-    float Pout = INA226_Power();       // 测量功率
+    // 读取测量值
+    float Vout = INA226_BusVoltage();  // 单位 V
+    float Iout = INA226_Current();     // 单位 A
+    float Pout = INA226_Power();       // 单位 W
 
-    char buf1[16], buf2[16], buf3[16];
+    // 电流 PID 是否启用：当检测到负载（Iout >= threshold）时可以启用当前 PID
+    if (Iout >= NOLOAD_CURRENT_THRESHOLD) {
+        // 如果用户设置了 I_setpoint > 0 可以开启电流 PID（这里我用简单策略：当电压 PID 启动且测得电流存在时）
+        if (I_setpoint > 0.001f) {
+            // 初始化 pidi 初始输出为当前测得值的近似映射
+            if (!current_pid_enabled) {
+                pidi.current = Iout;
+                pidi.integral = 0.0f;
+                pidi.err = 0.0f;
+                pidi.err_last = 0.0f;
+            }
+            current_pid_enabled = 1;
+        }
+    } else {
+        current_pid_enabled = 0;
+    }
+
+    if (voltage_pid_enabled)
+    {
+        float pid_out = VPID_realize(V_setpoint, Vout);
+        float new_voltage = clampf(V_setpoint + pid_out, 0.0f, MAX_VOLTAGE);
+        uint32_t dacv = voltage_to_dac(new_voltage);
+        dac_write_voltage(dacv);
+    }else {
+        // PID 未启用，仍允许用户手动以设定值直接输出（需求是 RECOVER_KEY 时启动 PID 并输出设定电压）
+        // 如果你希望按键直接生效可以取消注释：
+        // uint32_t dacv = voltage_to_dac(V_setpoint);
+        // dac_write_voltage(dacv);
+        ;
+    }
+
+    if (current_pid_enabled) {
+        float pid_out_i = IPID_realize(I_setpoint, Iout);
+        pidi.current += pid_out_i;
+        pidi.current = clampf(pidi.current, 0.0f, MAX_CURRENT);
+        uint32_t daci = current_to_dac(pidi.current);
+        dac_write_current(daci);
+    } else {
+        // 如果电流 PID 未启用，写 0（空载）
+        dac_write_current(0);
+    }
+
+    // 更新 UI 标签
+    static char buf1[16], buf2[16], buf3[16];
     snprintf(buf1, sizeof(buf1), "%05.2f", Vout);
     lv_label_set_text(VoutLabel, buf1);
     snprintf(buf2, sizeof(buf2), "%05.2f", Iout);
@@ -147,10 +203,9 @@ static void control_timer_cb(lv_timer_t * timer)
     snprintf(buf3, sizeof(buf3), "%05.2f", Pout);
     lv_label_set_text(PoutLabel, buf3);
 
-    // 显示设定值
+    // 更新设定值显示
     show_setpoints_to_ui();
 }
-
 void Control_Init(void)
 {
     // 启动 DAC 通道（CubeMX 生成 hdac，确保在 MX_DAC_Init() 中已 HAL_DAC_Start）
@@ -167,4 +222,3 @@ void Control_Init(void)
     // 创建 LVGL 定时器，周期 CONTROL_PERIOD_MS
     lv_timer_create(control_timer_cb, CONTROL_PERIOD_MS, NULL);
 }
-

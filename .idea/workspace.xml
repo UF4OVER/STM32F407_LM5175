@@ -23,14 +23,9 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="">
+    <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="docs(USER): 用户代码">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Src/dac.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/dac.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/USER/inc/pid.h" beforeDir="false" afterPath="$PROJECT_DIR$/USER/inc/pid.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/USER/inc/uf4power.h" beforeDir="false" afterPath="$PROJECT_DIR$/USER/inc/uf4power.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/USER/src/pid.c" beforeDir="false" afterPath="$PROJECT_DIR$/USER/src/pid.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/USER/src/uf4power.c" beforeDir="false" afterPath="$PROJECT_DIR$/USER/src/uf4power.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -182,8 +177,49 @@
       <workItem from="1758020195037" duration="11302000" />
       <workItem from="1758092885993" duration="23742000" />
       <workItem from="1758202353136" duration="130000" />
-      <workItem from="1758202492684" duration="5179000" />
+      <workItem from="1758202492684" duration="7323000" />
     </task>
+    <task id="LOCAL-00001" summary="refactor(电源控制): 重构电源控制代码&#10;&#10;- 修改 DAC 输出配置，禁用输出缓冲&#10;- 添加DAC测试最小DEMO，测试合理输出合理&#10;- 实现设定值编辑功能&#10;- 更新控制逻辑，使用定时器回调">
+      <option name="closed" value="true" />
+      <created>1758207749674</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1758207749674</updated>
+    </task>
+    <task id="LOCAL-00002" summary="refactor(电源控制): 重构电源控制代码&#10;&#10;- 修改 DAC 输出配置，禁用输出缓冲&#10;- 添加DAC测试最小DEMO，测试合理输出合理&#10;- 实现设定值编辑功能&#10;- 更新控制逻辑，使用定时器回调">
+      <option name="closed" value="true" />
+      <created>1758207890685</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1758207890685</updated>
+    </task>
+    <task id="LOCAL-00003" summary="style(GUI): LVGL EDITOR 生成代码">
+      <option name="closed" value="true" />
+      <created>1758208086142</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1758208086142</updated>
+    </task>
+    <task id="LOCAL-00004" summary="style(USB_DEVICE): USB_CDC串口设置">
+      <option name="closed" value="true" />
+      <created>1758208157723</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1758208157723</updated>
+    </task>
+    <task id="LOCAL-00005" summary="docs(USER): 用户代码">
+      <option name="closed" value="true" />
+      <created>1758208505818</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1758208505818</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -199,10 +235,30 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="master" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
           </value>
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial commit" />
+    <MESSAGE value="refactor(电源控制): 重构电源控制代码&#10;&#10;- 修改 DAC 输出配置，禁用输出缓冲&#10;- 添加DAC测试最小DEMO，测试合理输出合理&#10;- 实现设定值编辑功能&#10;- 更新控制逻辑，使用定时器回调" />
+    <MESSAGE value="style(GUI): LVGL EDITOR 生成代码" />
+    <MESSAGE value="style(USB_DEVICE): USB_CDC串口设置" />
+    <MESSAGE value="docs(USER): 用户代码" />
+    <option name="LAST_COMMIT_MESSAGE" value="docs(USER): 用户代码" />
   </component>
 </project>
