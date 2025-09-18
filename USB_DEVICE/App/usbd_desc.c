@@ -66,9 +66,9 @@
 #define USBD_LANGID_STRING     1033
 #define USBD_MANUFACTURER_STRING     "UF4Device"
 #define USBD_PID_FS     12312
-#define USBD_PRODUCT_STRING_FS     "Power Port"
-#define USBD_CONFIGURATION_STRING_FS     "UF4 Config"
-#define USBD_INTERFACE_STRING_FS     "UF4 Interface"
+#define USBD_PRODUCT_STRING_FS     "PowerPort"
+#define USBD_CONFIGURATION_STRING_FS     "UF4Config"
+#define USBD_INTERFACE_STRING_FS     "UF4Interface"
 
 #define USB_SIZ_BOS_DESC            0x0C
 
