@@ -1,17 +1,18 @@
 // control.c
-#include "main.h"
-#include "pid.h"
+#include "uf4power.h"
 #include "key.h"
 #include "lvgl.h"
-#include "uf4power.h"
+#include "main.h"
+#include "pid.h"
 
 #include "ina226.h"
 #include "ui_Screen1.h"
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 
 // 编辑位：3位整数 + 1位小数 -> 格式 "xx.x"（支持 0..26.5）
-static int edit_pos = 0; // 0..3 (0: tens, 1: units, 2: ones? 看下实现) 我们定义：pos0=十位(10s), pos1=个位(1s), pos2=小数位(0.1s)
+static int edit_pos =
+    0; // 0..3 (0: tens, 1: units, 2: ones? 看下实现) 我们定义：pos0=十位(10s), pos1=个位(1s), pos2=小数位(0.1s)
 static float V_setpoint = 12.0f;
 static float I_setpoint = 2.0f;
 
@@ -23,14 +24,18 @@ static volatile uint8_t current_pid_enabled = 0;
 static uint32_t last_control_tick = 0;
 
 // helper: clamp
-static float clampf(float v, float lo, float hi) {
-    if (v < lo) return lo;
-    if (v > hi) return hi;
+static float clampf(float v, float lo, float hi)
+{
+    if (v < lo)
+        return lo;
+    if (v > hi)
+        return hi;
     return v;
 }
 
 // 映射：电压(0..MAX_VOLTAGE) -> DAC (0..4095) 按你要求：0V -> 4095, MAX_VOLTAGE -> 0
-static uint32_t voltage_to_dac(float v) {
+static uint32_t voltage_to_dac(float v)
+{
     v = clampf(v, 0.0f, MAX_VOLTAGE);
     float ratio = v / MAX_VOLTAGE;
     float dacf = (1.0f - ratio) * DAC_MAX;
@@ -38,7 +43,8 @@ static uint32_t voltage_to_dac(float v) {
 }
 
 // 映射：电流(0..MAX_CURRENT) -> DAC (0..4095) 0A->0, MAX_CURRENT->4095
-static uint32_t current_to_dac(float i) {
+static uint32_t current_to_dac(float i)
+{
     i = clampf(i, 0.0f, MAX_CURRENT);
     float ratio = i / MAX_CURRENT;
     float dacf = ratio * DAC_MAX;
@@ -46,15 +52,19 @@ static uint32_t current_to_dac(float i) {
 }
 
 // 将指定值写入 DAC（12-bit right aligned）
-static void dac_write_voltage(uint32_t value) {
-    if (value > 4095) value = 4095;
+static void dac_write_voltage(uint32_t value)
+{
+    if (value > 4095)
+        value = 4095;
     HAL_DAC_SetValue(&hdac, DAC_VOLTAGE_CHANNEL, DAC_ALIGN_12B_R, value);
     // 如果需要，启动通道（如果尚未启动）：
     // HAL_DAC_Start(&hdac, DAC_VOLTAGE_CHANNEL); // 确保在 init 中已启动
 }
 
-static void dac_write_current(uint32_t value) {
-    if (value > 4095) value = 4095;
+static void dac_write_current(uint32_t value)
+{
+    if (value > 4095)
+        value = 4095;
     HAL_DAC_SetValue(&hdac, DAC_CURRENT_CHANNEL, DAC_ALIGN_12B_R, value);
 }
 
@@ -66,33 +76,46 @@ static void edit_voltage_by_delta(int delta)
     int ones = ((int)floorf(V_setpoint)) % 10;
     int tenths = (int)roundf((V_setpoint - floorf(V_setpoint)) * 10.0f) % 10;
 
-    if (edit_pos == 0) {
+    if (edit_pos == 0)
+    {
         tens += delta;
-    } else if (edit_pos == 1) {
+    }
+    else if (edit_pos == 1)
+    {
         ones += delta;
-    } else {
+    }
+    else
+    {
         tenths += delta;
     }
-    int new_int = tens*10 + ones;
+    int new_int = tens * 10 + ones;
     float new_v = new_int + (tenths * 0.1f);
     new_v = clampf(new_v, 0.0f, MAX_VOLTAGE);
     V_setpoint = new_v;
 }
 
 // 左右切位
-static void move_edit_pos(int dir) {
+static void move_edit_pos(int dir)
+{
     // dir: +1 -> right, -1 -> left
-    if (dir > 0) {
+    if (dir > 0)
+    {
         edit_pos++;
-        if (edit_pos > 2) edit_pos = 0;
-    } else {
-        if (edit_pos == 0) edit_pos = 2;
-        else edit_pos--;
+        if (edit_pos > 2)
+            edit_pos = 0;
+    }
+    else
+    {
+        if (edit_pos == 0)
+            edit_pos = 2;
+        else
+            edit_pos--;
     }
 }
 
 // 显示设定值到 lvgl label（比如 "12.3"）
-static void show_setpoints_to_ui(void) {
+static void show_setpoints_to_ui(void)
+{
     char buf[16];
     snprintf(buf, sizeof(buf), "%05.2f", V_setpoint);
     lv_label_set_text(VsetLabel, buf);
@@ -105,20 +128,37 @@ static void show_setpoints_to_ui(void) {
 // - 运行 PID（如果 enabled）
 // - 写 DAC
 // - 更新 UI 标签
-void control_timer_cb(lv_timer_t * timer)
+void control_timer_cb(lv_timer_t *timer)
 {
-    (void) timer;
+    (void)timer;
     // 先处理按键事件采样
     process_key_events();
 
     // 处理一按事件（edge）
-    if (RIGHT_KEY_pressed) { move_edit_pos(+1); RIGHT_KEY_pressed = 0; }
-    if (LEFT_KEY_pressed)  { move_edit_pos(-1); LEFT_KEY_pressed = 0; }
-    if (UP_KEY_pressed)    { edit_voltage_by_delta(+1); UP_KEY_pressed = 0; }
-    if (DOWN_KEY_pressed)  { edit_voltage_by_delta(-1); DOWN_KEY_pressed = 0; }
+    if (RIGHT_KEY_pressed)
+    {
+        move_edit_pos(+1);
+        RIGHT_KEY_pressed = 0;
+    }
+    if (LEFT_KEY_pressed)
+    {
+        move_edit_pos(-1);
+        LEFT_KEY_pressed = 0;
+    }
+    if (UP_KEY_pressed)
+    {
+        edit_voltage_by_delta(+1);
+        UP_KEY_pressed = 0;
+    }
+    if (DOWN_KEY_pressed)
+    {
+        edit_voltage_by_delta(-1);
+        DOWN_KEY_pressed = 0;
+    }
 
     // RECOVER_KEY 按下 -> 启动电压 PID 并使能输出
-    if (RECOVER_KEY_pressed) {
+    if (RECOVER_KEY_pressed)
+    {
         RECOVER_KEY_pressed = 0;
         // 把 pidv.voltage 初始置为当前测得电压以避免突变
         pidv.voltage = INA226_BusVoltage();
@@ -130,7 +170,8 @@ void control_timer_cb(lv_timer_t * timer)
     }
 
     // PAUSED_KEY 可以用来停 PID（短按切换）
-    if (PAUSED_KEY_pressed) {
+    if (PAUSED_KEY_pressed)
+    {
         PAUSED_KEY_pressed = 0;
         voltage_pid_enabled = 0;
         current_pid_enabled = 0;
@@ -138,7 +179,8 @@ void control_timer_cb(lv_timer_t * timer)
     }
 
     // FALSE_KEY: 直接把 DAC 设为某个安全值（如 0 输出）
-    if (FALSE_KEY_pressed) {
+    if (FALSE_KEY_pressed)
+    {
         FALSE_KEY_pressed = 0;
         voltage_pid_enabled = 0;
         current_pid_enabled = 0;
@@ -148,16 +190,19 @@ void control_timer_cb(lv_timer_t * timer)
     }
 
     // 读取测量值
-    float Vout = INA226_BusVoltage();  // 单位 V
-    float Iout = INA226_Current();     // 单位 A
-    float Pout = INA226_Power();       // 单位 W
+    float Vout = INA226_BusVoltage(); // 单位 V //参考：推荐关键和耦合度高的数据使用全局变量，修改会很方便 libo5
+    float Iout = INA226_Current();    // 单位 A
+    float Pout = INA226_Power();      // 单位 W
 
     // 电流 PID 是否启用：当检测到负载（Iout >= threshold）时可以启用当前 PID
-    if (Iout >= NOLOAD_CURRENT_THRESHOLD) {
+    if (Iout >= NOLOAD_CURRENT_THRESHOLD)
+    {
         // 如果用户设置了 I_setpoint > 0 可以开启电流 PID（这里我用简单策略：当电压 PID 启动且测得电流存在时）
-        if (I_setpoint > 0.001f) {
+        if (I_setpoint > 0.001f)
+        {
             // 初始化 pidi 初始输出为当前测得值的近似映射
-            if (!current_pid_enabled) {
+            if (!current_pid_enabled)
+            {
                 pidi.current = Iout;
                 pidi.integral = 0.0f;
                 pidi.err = 0.0f;
@@ -165,17 +210,24 @@ void control_timer_cb(lv_timer_t * timer)
             }
             current_pid_enabled = 1;
         }
-    } else {
+    }
+    else
+    {
         current_pid_enabled = 0;
     }
 
     if (voltage_pid_enabled)
     {
         float pid_out = VPID_realize(V_setpoint, Vout);
-        float new_voltage = clampf(V_setpoint + pid_out, 0.0f, MAX_VOLTAGE);
+        // V_setpoint 无法是否改变
+        float new_voltage = clampf(V_setpoint + pid_out, 0.0f, MAX_VOLTAGE); // 问题代码V_setpoint + pid_out可能累加
         uint32_t dacv = voltage_to_dac(new_voltage);
         dac_write_voltage(dacv);
-    }else {
+        // 可能是问题所在，new_voltage是pidout+设定值限幅，pidout+设定值可能会累加，导致最终到达限幅，理论上pid_out的值会很大，需实际观察pid_out输出
+        // libo
+    }
+    else
+    {
         // PID 未启用，仍允许用户手动以设定值直接输出（需求是 RECOVER_KEY 时启动 PID 并输出设定电压）
         // 如果你希望按键直接生效可以取消注释：
         // uint32_t dacv = voltage_to_dac(V_setpoint);
@@ -183,13 +235,16 @@ void control_timer_cb(lv_timer_t * timer)
         ;
     }
 
-    if (current_pid_enabled) {
+    if (current_pid_enabled)
+    {
         float pid_out_i = IPID_realize(I_setpoint, Iout);
         pidi.current += pid_out_i;
         pidi.current = clampf(pidi.current, 0.0f, MAX_CURRENT);
         uint32_t daci = current_to_dac(pidi.current);
         dac_write_current(daci);
-    } else {
+    }
+    else
+    {
         // 如果电流 PID 未启用，写 0（空载）
         dac_write_current(0);
     }
