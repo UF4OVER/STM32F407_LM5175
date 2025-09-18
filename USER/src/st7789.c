@@ -3,11 +3,7 @@
 #ifdef USE_DMA
 #include <string.h>
 uint16_t DMA_MIN_SIZE = 16;
-/* 如果您使用的是 DMA，则需要一个“帧缓冲区”来存储要显示的数据。
- * 如果您的 MCU 没有足够的 RAM，请避免使用 DMA（或设置为 5 比 1）。
- * 如果您的 MCU 有足够的 RAM（甚至大于全画幅），
- * 然后您可以将帧缓冲区大小指定为下面的全分辨率。
- */
+
  #define HOR_LEN 	5	//	Also mind the resolution of your screen!
 uint16_t disp_buf[ST7789_WIDTH * HOR_LEN];
 #endif

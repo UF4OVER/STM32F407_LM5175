@@ -14,15 +14,6 @@ extern FontDef Font_7x10;
 extern FontDef Font_11x18;
 extern FontDef Font_16x26;
 
-//16-bit(RGB565) Image lib.
-/*******************************************
- *             CAUTION:
- *   If the MCU onchip flash cannot
- *  store such huge image data,please
- *           do not use it.
- * These pics are for test purpose only.
- *******************************************/
-
 /* 128x128 pixel RGB565 image */
 extern const uint16_t saber[][128];
 
