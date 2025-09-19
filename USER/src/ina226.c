@@ -1,4 +1,4 @@
-#include "INA226.h"
+#include "ina226.h"
 #include "i2c.h"
 
 uint16_t Buff[10], tempReg;
