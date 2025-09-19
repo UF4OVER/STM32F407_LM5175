@@ -20,7 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
-
+#include "pid.h"
 /* USER CODE BEGIN INCLUDE */
 
 /* USER CODE END INCLUDE */
@@ -261,7 +261,15 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
+    // 处理接收到的数据
+    // 处理接收到的数据
+    if (*Len > 0) {
+        // 复制接收到的数据到缓冲区
+        memcpy(cdc_rx_buffer, Buf, *Len);
+        cdc_rx_buffer[*Len] = '\0';  // 确保字符串以null结尾
+        cdc_data_received = 1;  // 设置接收标志
+    }
+    USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   return (USBD_OK);
   /* USER CODE END 6 */

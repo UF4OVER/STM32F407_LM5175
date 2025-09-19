@@ -9,8 +9,11 @@
 #include "ui_DEFAULT.h"
 #include "ui_DEBUG.h"
 #include "ui_const.h"
+#include "usbd_cdc_if.h"
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 // 编辑位：3位整数 + 1位小数 -> 格式 "xx.x"（支持 0..26.5）
 static int edit_pos = 0;
@@ -25,6 +28,16 @@ static volatile uint8_t current_pid_enabled = 0;
 float g_Vout = 0.0f;  // 总线电压 (V)
 float g_Iout = 0.0f;  // 电流 (A)
 float g_Pout = 0.0f;  // 功率 (W)
+
+// VOFA数据发送相关
+static uint32_t vofa_send_counter = 0;
+#define VOFA_SEND_INTERVAL 5  // 每10次控制循环发送一次数据
+#define CH_COUNT 2
+
+volatile uint8_t cdc_data_received = 0;
+char cdc_rx_buffer[CDC_RX_BUFFER_SIZE];
+
+
 
 // helper: clamp
 static float clampf(float v, float lo, float hi)
@@ -129,6 +142,134 @@ static void show_setpoints_to_ui(void)
     lv_label_set_text(IsetLabel, buf);
 }
 
+// 发送VOFA格式数据
+static void send_vofa_data(void)
+{
+    // VOFA JustFloat格式: 数据 + 0x00 0x00 0x80 0x7f (帧尾)
+    struct {
+        float ch_data[CH_COUNT];
+        unsigned char tail[4];
+    } vofa_frame;
+
+    // 填充通道数据
+    vofa_frame.ch_data[0] = g_Vout;      // 实际电压
+    vofa_frame.ch_data[1] = V_setpoint;  // 预设电压
+
+    // 填充帧尾
+    vofa_frame.tail[0] = 0x00;
+    vofa_frame.tail[1] = 0x00;
+    vofa_frame.tail[2] = 0x80;
+    vofa_frame.tail[3] = 0x7f;
+
+    // 通过CDC发送
+    CDC_Transmit_FS((uint8_t*)&vofa_frame, sizeof(vofa_frame));
+}
+
+// 处理来自CDC的PID参数更新命令
+// 命令格式: "PID,V,1.0,0.5,0.1" 或 "PID,I,1.0,0.5,0.1"
+void process_pid_command(char* command)
+{
+    // 检查命令是否以"PID"开头
+    if (strncmp(command, "PID,", 4) != 0) {
+        char error_msg[] = "Invalid command format. Expected: PID,<V|I>,<Kp>,<Ki>,<Kd>\r\n";
+        CDC_Transmit_FS((uint8_t*)error_msg, strlen(error_msg));
+        return;
+    }
+
+    char pid_type = command[4]; // 'V' 或 'I'
+    char* token = strtok(command, ",");
+
+    // 跳过"PID"标记
+    token = strtok(NULL, ",");
+    if (token == NULL) {
+        char error_msg[] = "Missing PID type. Expected: V or I\r\n";
+        CDC_Transmit_FS((uint8_t*)error_msg, strlen(error_msg));
+        return;
+    }
+
+    pid_type = token[0];
+
+    // 获取Kp
+    token = strtok(NULL, ",");
+    if (token == NULL) {
+        char error_msg[] = "Missing Kp value\r\n";
+        CDC_Transmit_FS((uint8_t*)error_msg, strlen(error_msg));
+        return;
+    }
+    float kp = atof(token);
+
+    // 获取Ki
+    token = strtok(NULL, ",");
+    if (token == NULL) {
+        char error_msg[] = "Missing Ki value\r\n";
+        CDC_Transmit_FS((uint8_t*)error_msg, strlen(error_msg));
+        return;
+    }
+    float ki = atof(token);
+
+    // 获取Kd
+    token = strtok(NULL, ",");
+    if (token == NULL) {
+        char error_msg[] = "Missing Kd value\r\n";
+        CDC_Transmit_FS((uint8_t*)error_msg, strlen(error_msg));
+        return;
+    }
+    float kd = atof(token);
+
+    // 更新PID参数
+    switch (pid_type) {
+        case 'V':
+        case 'v':
+            pidv.Kp = kp;
+            pidv.Ki = ki;
+            pidv.Kd = kd;
+            {
+                char msg[100];
+                snprintf(msg, sizeof(msg), "Updated Voltage PID: Kp=%.2f, Ki=%.2f, Kd=%.2f\r\n", kp, ki, kd);
+                CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+            }
+            break;
+
+        case 'I':
+        case 'i':
+            pidi.Kp = kp;
+            pidi.Ki = ki;
+            pidi.Kd = kd;
+            {
+                char msg[100];
+                snprintf(msg, sizeof(msg), "Updated Current PID: Kp=%.2f, Ki=%.2f, Kd=%.2f\r\n", kp, ki, kd);
+                CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+            }
+            break;
+
+        default:
+            {
+                char error_msg[] = "Invalid PID type. Use 'V' for voltage or 'I' for current\r\n";
+                CDC_Transmit_FS((uint8_t*)error_msg, strlen(error_msg));
+            }
+            return;
+    }
+}
+
+// 处理CDC接收到的数据
+void process_cdc_data(void)
+{
+    if (cdc_data_received) {
+        cdc_data_received = 0;
+
+        // 确保字符串以null结尾
+        cdc_rx_buffer[CDC_RX_BUFFER_SIZE-1] = '\0';
+
+        // 如果是PID命令，则处理它
+        if (strncmp(cdc_rx_buffer, "PID,", 4) == 0) {
+            process_pid_command(cdc_rx_buffer);
+        } else {
+            char error_msg[] = "Unknown command\r\n";
+            CDC_Transmit_FS((uint8_t*)error_msg, strlen(error_msg));
+        }
+    }
+}
+
 // 控制定时器回调（由HAL 定时器每 1_MS 调用一次）
 // - 读取 INA226
 // - 运行 PID（如果 enabled）
@@ -136,6 +277,9 @@ static void show_setpoints_to_ui(void)
 // - 更新 UI 标签
 void control_timer_cb()
 {
+    // 处理CDC接收到的数据
+    process_cdc_data();
+
     // 先处理按键事件采样
     process_key_events();
 
@@ -163,7 +307,7 @@ void control_timer_cb()
     if (RECOVER_KEY_pressed)
     {
         RECOVER_KEY_pressed = 0;
-        pidv.voltage = g_Vout;
+        pidv.SetVoltage = g_Vout;
         pidv.integral = 0.0f;
         pidv.err = 0.0f;
         pidv.err_last = 0.0f;
@@ -203,7 +347,7 @@ void control_timer_cb()
             // 初始化 pidi 初始输出为当前测得值的近似映射
             if (!current_pid_enabled)
             {
-                pidi.current = g_Iout;
+                pidi.SetCurrent = g_Iout;
                 pidi.integral = 0.0f;
                 pidi.err = 0.0f;
                 pidi.err_last = 0.0f;
@@ -250,9 +394,9 @@ void control_timer_cb()
     if (current_pid_enabled)
     {
         float pid_out_i = IPID_realize(I_setpoint, g_Iout);
-        pidi.current += pid_out_i;
-        pidi.current = clampf(pidi.current, 0.0f, MAX_CURRENT);
-        uint32_t daci = current_to_dac(pidi.current);
+        pidi.SetCurrent += pid_out_i;
+        pidi.SetCurrent = clampf(pidi.SetCurrent, 0.0f, MAX_CURRENT);
+        uint32_t daci = current_to_dac(pidi.SetCurrent);
         dac_write_current(daci);
     }
     else
@@ -272,6 +416,13 @@ void control_timer_cb()
 
     // 更新设定值显示
     show_setpoints_to_ui();
+
+    // 发送VOFA数据
+    vofa_send_counter++;
+    if (vofa_send_counter >= VOFA_SEND_INTERVAL) {
+        vofa_send_counter = 0;
+        send_vofa_data();
+    }
 }
 void Control_Init(void)
 {
