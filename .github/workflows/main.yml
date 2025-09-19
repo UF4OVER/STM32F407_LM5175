@@ -1,10 +1,9 @@
-
 name: Build and Release STM32F407
 
 on:
   push:
-    branches:
-        - master
+    branches: [master]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,6 +11,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # 让 git 能打 tag
 
       - name: Install toolchain
         run: |
@@ -24,9 +25,18 @@ jobs:
       - name: Build firmware
         run: cmake --build build --config Release
 
-      - name: Upload to Release
+      # 自动生成 tag：格式 20240919-012
+      - name: Generate tag
+        id: tag
+        run: |
+          TAG="$(date +%Y%m%d)-$(printf '%03d' $GITHUB_RUN_NUMBER)"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create Release + Upload assets
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Firmware ${{ steps.tag.outputs.tag }}
           files: |
             build/STM32F407_LM5175.elf
             build/STM32F407_LM5175.hex
