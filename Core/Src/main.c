@@ -81,6 +81,7 @@ static inline uint16_t CurrentToDac(float i)
         i = 0.0f;
     return (uint16_t)(i * 4095.0f / 10.0f);
 }
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -91,13 +92,6 @@ static inline uint16_t CurrentToDac(float i)
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#define MAX_VOLTAGE 26.5f
-#define DAC_MAX 4095.0f
-#define voltage_to_dac(v) ((uint32_t)roundf((1.0f - (v / MAX_VOLTAGE)) * DAC_MAX))
-
-// 当前设定电压
-float V_setpoint = 12.0f;
-int edit_pos = 0; // 0=十位,1=个位,2=小数
 
 // 按键处理函数，和你的 process_key_events() 保持一致
 extern void process_key_events(void);
@@ -143,7 +137,7 @@ static void move_edit_pos(int dir)
         edit_pos = (edit_pos + 2) % 3; // 左移
 }
 
-// 简单循环测试按键调节 DAC 输出
+// 简单循环测试按键
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -240,11 +234,12 @@ int main(void)
     //    ST7789_Test();
     HAL_Delay(100); // 10ms循环
 
+
     lv_init();
     lv_port_disp_init();
-    HAL_Delay(100); // 10ms循环
+    HAL_Delay(100);
     ui_init();
-    HAL_Delay(100); // 10ms循环
+    HAL_Delay(100);
 
     //    VPID_init();
     //    IPID_init();
@@ -252,6 +247,7 @@ int main(void)
     ui_task_init();
     HAL_Delay(100); // 10ms循环
                     //    Control_Init();  //？未启用pid？libo1
+
 
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); // 电流
     HAL_DAC_Start(&hdac, DAC_CHANNEL_2); // 电压
@@ -295,7 +291,7 @@ int main(void)
         printf("Setpoint: %.2f V -> DAC: %lu\n", V_setpoint, dacv);
 
         lv_timer_handler(); // 让 LVGL 和定时器跑起来
-        HAL_Delay(5);
+
         /* USER CODE BEGIN 3 */
     }
     /* USER CODE END 3 */
