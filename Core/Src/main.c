@@ -50,37 +50,7 @@ int _write(int file, char *ptr, int len)
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-extern DAC_HandleTypeDef hdac; // 使用 CubeMX 生成的 DAC 句柄
 
-/* ========== 全局变量 ========== */
-float target_voltage = 12.0f; // 目标电压 (V)
-float target_current = 5.0f;  // 目标电流 (A)
-
-uint16_t DAC_voltage = 0; // DAC 通道2控制电压
-uint16_t DAC_current = 0; // DAC 通道1控制电流
-
-int digit_index = 0; // 当前正在修改哪一位（通过左右键选择）
-
-/* DAC 映射函数 */
-static inline uint16_t VoltageToDac(float v)
-{
-    // 0 → 26.5V, 4095 → 0V
-    if (v > 26.5f)
-        v = 26.5f;
-    if (v < 0.0f)
-        v = 0.0f;
-    return (uint16_t)((26.5f - v) * 4095.0f / 26.5f);
-}
-
-static inline uint16_t CurrentToDac(float i)
-{
-    // 0 → 0A, 4095 → 10A
-    if (i > 10.0f)
-        i = 10.0f;
-    if (i < 0.0f)
-        i = 0.0f;
-    return (uint16_t)(i * 4095.0f / 10.0f);
-}
 
 /* USER CODE END PD */
 
@@ -93,49 +63,6 @@ static inline uint16_t CurrentToDac(float i)
 
 /* USER CODE BEGIN PV */
 
-// 按键处理函数，和你的 process_key_events() 保持一致
-extern void process_key_events(void);
-
-// DAC 写函数
-extern DAC_HandleTypeDef hdac;
-static void dac_write_voltage(uint32_t value)
-{
-    if (value > 4095)
-        value = 4095;
-    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, value);
-}
-
-// 调整设定值函数
-static void edit_voltage_by_delta(int delta) // 存在同名函数，会冲突 libo6
-{
-    int tens = ((int)floorf(V_setpoint)) / 10;
-    int ones = ((int)floorf(V_setpoint)) % 10;
-    int tenths = (int)roundf((V_setpoint - floorf(V_setpoint)) * 10.0f) % 10;
-
-    if (edit_pos == 0)
-        tens += delta;
-    else if (edit_pos == 1)
-        ones += delta;
-    else
-        tenths += delta;
-
-    int new_int = tens * 10 + ones;
-    float new_v = new_int + tenths * 0.1f;
-    if (new_v < 0.0f)
-        new_v = 0.0f;
-    if (new_v > MAX_VOLTAGE)
-        new_v = MAX_VOLTAGE;
-    V_setpoint = new_v;
-}
-
-// 左右移动编辑位
-static void move_edit_pos(int dir)
-{
-    if (dir > 0)
-        edit_pos = (edit_pos + 1) % 3;
-    else
-        edit_pos = (edit_pos + 2) % 3; // 左移
-}
 
 // 简单循环测试按键
 /* USER CODE END PV */
@@ -258,39 +185,7 @@ int main(void)
     /* Infinite loop */
     /* USER CODE BEGIN WHILE */
     while (1)
-    {
-        process_key_events(); // 扫描按键
-
-        // 按键处理
-        if (UP_KEY_pressed)
         {
-            edit_voltage_by_delta(+1);
-            UP_KEY_pressed = 0;
-        }
-        if (DOWN_KEY_pressed)
-        {
-            edit_voltage_by_delta(-1);
-            DOWN_KEY_pressed = 0;
-        }
-        if (RIGHT_KEY_pressed)
-        {
-            move_edit_pos(+1);
-            RIGHT_KEY_pressed = 0;
-        }
-        if (LEFT_KEY_pressed)
-        {
-            move_edit_pos(-1);
-            LEFT_KEY_pressed = 0;
-        }
-
-        // 写 DAC
-        uint32_t dacv = voltage_to_dac(V_setpoint);
-        dac_write_voltage(dacv);
-
-        // 打印调试
-        printf("Setpoint: %.2f V -> DAC: %lu\n", V_setpoint, dacv);
-
-        lv_timer_handler(); // 让 LVGL 和定时器跑起来
 
         /* USER CODE BEGIN 3 */
     }
