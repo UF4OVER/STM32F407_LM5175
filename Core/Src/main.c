@@ -175,9 +175,7 @@ int main(void)
     HAL_TIM_Base_Start_IT(&htim7);
 
     ST7789_Init();
-    //    ST7789_Test();
     HAL_Delay(100);
-
 
     lv_init();
     lv_port_disp_init();
@@ -189,18 +187,14 @@ int main(void)
     IPID_init();
 
     ui_task_init();
-    if (DEBUGMODE)
-    {
-        lv_scr_load(ui_DEBUG);
-    }
+
     HAL_Delay(100);
-//    Control_Init();  //？未启用pid？libo1
+    Control_Init();
 
 
     HAL_DAC_Start(&hdac, DAC_CHANNEL_1); // 电流
     HAL_DAC_Start(&hdac, DAC_CHANNEL_2); // 电压
 
-    //    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R, 4095);
   /* USER CODE END 2 */
 
   /* Infinite loop */

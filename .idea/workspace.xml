@@ -23,11 +23,11 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="refactor(电源): 重构电源管理系统&#10;&#10;- 修改了多个文件以优化电源管理逻辑&#10;- 更新了 DAC 配置，启用了输出缓冲&#10;- 调整了 GPIO 配置，移除了 FAN_PWM 相关代码&#10;- 重构了 main 函数，增加了控制定时器和调试模式支持- 更新了 PID 控制参数，并添加了宏定义">
+    <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="feat(pid): 实现电压和电流环的 PID 控制&#10;&#10;-重构了 PID 控制算法，增加了积分抗饱和和输出限幅功能&#10;- 添加了通过 USB CDC接口更新 PID 参数的功能&#10;- 实现了 VOFA 数据格式的发送&#10;- 优化了控制定时器回调函数，集成了 CDC 数据处理和 VOFA 数据发送">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Src/tim.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/tim.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/USB_DEVICE/App/usbd_cdc_if.c" beforeDir="false" afterPath="$PROJECT_DIR$/USB_DEVICE/App/usbd_cdc_if.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/main.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/USER/inc/pid.h" beforeDir="false" afterPath="$PROJECT_DIR$/USER/inc/pid.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/USER/inc/uf4power.h" beforeDir="false" afterPath="$PROJECT_DIR$/USER/inc/uf4power.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/USER/src/pid.c" beforeDir="false" afterPath="$PROJECT_DIR$/USER/src/pid.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/USER/src/uf4power.c" beforeDir="false" afterPath="$PROJECT_DIR$/USER/src/uf4power.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/build/STM32F407_LM5175.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/STM32F407_LM5175.bin" afterDir="false" />
@@ -204,7 +204,7 @@
       <workItem from="1758092885993" duration="23742000" />
       <workItem from="1758202353136" duration="130000" />
       <workItem from="1758202492684" duration="8387000" />
-      <workItem from="1758247208982" duration="17417000" />
+      <workItem from="1758247208982" duration="21608000" />
     </task>
     <task id="LOCAL-00001" summary="refactor(电源控制): 重构电源控制代码&#10;&#10;- 修改 DAC 输出配置，禁用输出缓冲&#10;- 添加DAC测试最小DEMO，测试合理输出合理&#10;- 实现设定值编辑功能&#10;- 更新控制逻辑，使用定时器回调">
       <option name="closed" value="true" />
@@ -262,7 +262,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758254682663</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="feat(pid): 实现电压和电流环的 PID 控制&#10;&#10;-重构了 PID 控制算法，增加了积分抗饱和和输出限幅功能&#10;- 添加了通过 USB CDC接口更新 PID 参数的功能&#10;- 实现了 VOFA 数据格式的发送&#10;- 优化了控制定时器回调函数，集成了 CDC 数据处理和 VOFA 数据发送">
+      <option name="closed" value="true" />
+      <created>1758268446762</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1758268446762</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -304,7 +312,8 @@
     <MESSAGE value="docs(USER): 用户代码" />
     <MESSAGE value="QQQ" />
     <MESSAGE value="refactor(电源): 重构电源管理系统&#10;&#10;- 修改了多个文件以优化电源管理逻辑&#10;- 更新了 DAC 配置，启用了输出缓冲&#10;- 调整了 GPIO 配置，移除了 FAN_PWM 相关代码&#10;- 重构了 main 函数，增加了控制定时器和调试模式支持- 更新了 PID 控制参数，并添加了宏定义" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(电源): 重构电源管理系统&#10;&#10;- 修改了多个文件以优化电源管理逻辑&#10;- 更新了 DAC 配置，启用了输出缓冲&#10;- 调整了 GPIO 配置，移除了 FAN_PWM 相关代码&#10;- 重构了 main 函数，增加了控制定时器和调试模式支持- 更新了 PID 控制参数，并添加了宏定义" />
+    <MESSAGE value="feat(pid): 实现电压和电流环的 PID 控制&#10;&#10;-重构了 PID 控制算法，增加了积分抗饱和和输出限幅功能&#10;- 添加了通过 USB CDC接口更新 PID 参数的功能&#10;- 实现了 VOFA 数据格式的发送&#10;- 优化了控制定时器回调函数，集成了 CDC 数据处理和 VOFA 数据发送" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(pid): 实现电压和电流环的 PID 控制&#10;&#10;-重构了 PID 控制算法，增加了积分抗饱和和输出限幅功能&#10;- 添加了通过 USB CDC接口更新 PID 参数的功能&#10;- 实现了 VOFA 数据格式的发送&#10;- 优化了控制定时器回调函数，集成了 CDC 数据处理和 VOFA 数据发送" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

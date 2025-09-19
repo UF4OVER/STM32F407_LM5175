@@ -14,7 +14,7 @@
 pid_v pidv;
 pid_i pidi;
 
-// =================== 电压环 PID ===================
+
 void VPID_init()
 {
     printf("vPID_init begin \n");
@@ -23,6 +23,7 @@ void VPID_init()
 
     pidv.err = 0.0f;
     pidv.err_last = 0.0f;
+    pidv.err_llast = 0.0f;  // 增加前次误差
     pidv.integral = 0.0f;
     pidv.derivative = 0.0f;
 
@@ -35,7 +36,8 @@ void VPID_init()
     pidv.output_max   = PID_OUTPUT_MAX;
 
     pidv.d_filter_alpha = D_FILTER_ALPHA;
-    pidv.output = 0.0f;
+    // 初始化输出值为设定值
+    pidv.output = DEFAULT_V_SET;
 
     printf("vPID_init end \n");
 }
@@ -49,6 +51,7 @@ void IPID_init()
 
     pidi.err = 0.0f;
     pidi.err_last = 0.0f;
+    pidi.err_llast = 0.0f;  // 增加前次误差
     pidi.integral = 0.0f;
     pidi.derivative = 0.0f;
 
@@ -61,81 +64,67 @@ void IPID_init()
     pidi.output_max   = PID_OUTPUT_MAX;
 
     pidi.d_filter_alpha = D_FILTER_ALPHA;
-    pidi.output = 0.0f;
+    // 初始化输出值为设定值
+    pidi.output = DEFAULT_I_SET;
 
     printf("iPID_init end \n");
 }
 
-// =================== 电压环计算 ===================
+
+// =================== 电压环计算 (增量式PID) ===================
 float VPID_realize(float set_v, float act_v)
 {
     pidv.SetVoltage = set_v;
     pidv.ActualVoltage = act_v;
 
+    // 更新误差值
+    pidv.err_llast = pidv.err_last;
+    pidv.err_last = pidv.err;
     pidv.err = pidv.SetVoltage - pidv.ActualVoltage;
 
-    // P项
-    float p_term = pidv.Kp * pidv.err;
+    // 计算增量
+    float delta_p = pidv.Kp * (pidv.err - pidv.err_last);
+    float delta_i = pidv.Ki * pidv.err;
+    float delta_d = pidv.Kd * (pidv.err - 2 * pidv.err_last + pidv.err_llast);
 
-    // I项 (积分抗饱和)
-    if (pidv.output < pidv.output_max && pidv.output > pidv.output_min) {
-        pidv.integral += pidv.err * PID_DT;
-        if (pidv.integral > pidv.integral_max) pidv.integral = pidv.integral_max;
-        if (pidv.integral < -pidv.integral_max) pidv.integral = -pidv.integral_max;
-    }
-    float i_term = pidv.Ki * pidv.integral;
+    // 计算输出增量
+    float delta_output = delta_p + delta_i + delta_d;
 
-    // D项 (带滤波)
-    float d_raw = (pidv.err - pidv.err_last) / PID_DT;
-    pidv.derivative = pidv.d_filter_alpha * d_raw +
-                      (1.0f - pidv.d_filter_alpha) * pidv.derivative;
-    float d_term = pidv.Kd * pidv.derivative;
-
-    // PID 输出
-    float result = p_term + i_term + d_term;
+    // 累加到输出值
+    pidv.output += delta_output;
 
     // 输出限幅
-    if (result > pidv.output_max) result = pidv.output_max;
-    if (result < pidv.output_min) result = pidv.output_min;
+    if (pidv.output > pidv.output_max) pidv.output = pidv.output_max;
+    if (pidv.output < pidv.output_min) pidv.output = pidv.output_min;
 
-    pidv.err_last = pidv.err;
-    pidv.output = result;
-    return result;
+    return pidv.output;
 }
 
-// =================== 电流环计算 ===================
+// =================== 电流环计算 (增量式PID) ===================
 float IPID_realize(float i, float i_r)
 {
     pidi.SetCurrent = i;
     pidi.ActualCurrent = i_r;
 
+    // 更新误差值
+    pidi.err_llast = pidi.err_last;
+    pidi.err_last = pidi.err;
     pidi.err = pidi.SetCurrent - pidi.ActualCurrent;
 
-    // P项
-    float p_term = pidi.Kp * pidi.err;
+    // 计算增量
+    float delta_p = pidi.Kp * (pidi.err - pidi.err_last);
+    float delta_i = pidi.Ki * pidi.err;
+    float delta_d = pidi.Kd * (pidi.err - 2 * pidi.err_last + pidi.err_llast);
 
-    // I项 (积分抗饱和)
-    if (pidi.output < pidi.output_max && pidi.output > pidi.output_min) {
-        pidi.integral += pidi.err * PID_DT;
-        if (pidi.integral > pidi.integral_max) pidi.integral = pidi.integral_max;
-        if (pidi.integral < -pidi.integral_max) pidi.integral = -pidi.integral_max;
-    }
-    float i_term = pidi.Ki * pidi.integral;
+    // 计算输出增量
+    float delta_output = delta_p + delta_i + delta_d;
 
-    // D项 (带滤波)
-    float d_raw = (pidi.err - pidi.err_last) / PID_DT;
-    pidi.derivative = pidi.d_filter_alpha * d_raw +
-                      (1.0f - pidi.d_filter_alpha) * pidi.derivative;
-    float d_term = pidi.Kd * pidi.derivative;
-
-    // PID 输出
-    float result = p_term + i_term + d_term;
+    // 累加到输出值
+    pidi.output += delta_output;
 
     // 输出限幅
-    if (result > pidi.output_max) result = pidi.output_max;
-    if (result < pidi.output_min) result = pidi.output_min;
+    if (pidi.output > pidi.output_max) pidi.output = pidi.output_max;
+    if (pidi.output < pidi.output_min) pidi.output = pidi.output_min;
 
-    pidi.err_last = pidi.err;
-    pidi.output = result;
-    return result;
+    return pidi.output;
 }

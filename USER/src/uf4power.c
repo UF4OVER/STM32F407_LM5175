@@ -24,15 +24,17 @@ static float I_setpoint = 2.0f;
 static volatile uint8_t voltage_pid_enabled = 1;
 static volatile uint8_t current_pid_enabled = 0;
 
-// 全局变量定义，用于存储 INA226 测量值
 float g_Vout = 0.0f;  // 总线电压 (V)
 float g_Iout = 0.0f;  // 电流 (A)
 float g_Pout = 0.0f;  // 功率 (W)
 
+float vout_dac_value = 0;  // DAC 输出值
+float pid_out_value = 0;
 // VOFA数据发送相关
 static uint32_t vofa_send_counter = 0;
 #define VOFA_SEND_INTERVAL 5  // 每10次控制循环发送一次数据
-#define CH_COUNT 2
+#define CH_COUNT 4
+#define CDC_RX_BUFFER_SIZE 64
 
 volatile uint8_t cdc_data_received = 0;
 char cdc_rx_buffer[CDC_RX_BUFFER_SIZE];
@@ -152,8 +154,10 @@ static void send_vofa_data(void)
     } vofa_frame;
 
     // 填充通道数据
-    vofa_frame.ch_data[0] = g_Vout;      // 实际电压
-    vofa_frame.ch_data[1] = V_setpoint;  // 预设电压
+    vofa_frame.ch_data[0] = g_Vout;         // 实际电压
+    vofa_frame.ch_data[1] = V_setpoint;     // 预设电压
+    vofa_frame.ch_data[2] = pid_out_value;  // PID计算结果
+    vofa_frame.ch_data[3] = vout_dac_value; // DAC实际设定值
 
     // 填充帧尾
     vofa_frame.tail[0] = 0x00;
@@ -311,6 +315,8 @@ void control_timer_cb()
         pidv.integral = 0.0f;
         pidv.err = 0.0f;
         pidv.err_last = 0.0f;
+        // 重置输出电压值为当前电压
+        pidv.output = g_Vout;
         voltage_pid_enabled = 1;  // 启用 PID
         OUTPUT_ENABLE();
     }
@@ -351,6 +357,8 @@ void control_timer_cb()
                 pidi.integral = 0.0f;
                 pidi.err = 0.0f;
                 pidi.err_last = 0.0f;
+                // 重置输出电流值为当前电流
+                pidi.output = g_Iout;
             }
             current_pid_enabled = 1;
         }
@@ -362,41 +370,35 @@ void control_timer_cb()
 
     if (voltage_pid_enabled)
     {
-        float pid_out = VPID_realize(V_setpoint, g_Vout);
-        // V_setpoint 无法是否改变
+        VPID_realize(V_setpoint, g_Vout);
+        pid_out_value = pidv.output;
+        // 对于增量式PID，output字段已经是实际的输出电压值
+        float new_voltage = clampf(pidv.output, 0.0f, MAX_VOLTAGE);
+        vout_dac_value = voltage_to_dac(new_voltage);
 
-        float new_voltage = clampf(V_setpoint + pid_out, 0.0f, MAX_VOLTAGE); // 问题代码V_setpoint + pid_out可能累加
-        uint32_t dacv = voltage_to_dac(new_voltage);
-        dac_write_voltage(dacv);
+        dac_write_voltage(vout_dac_value);
 
         char buf[16];
-        snprintf(buf, sizeof(buf), "%05.4f", pid_out);
+        snprintf(buf, sizeof(buf), "%05.4f", pid_out_value);
         lv_label_set_text(DEBUG_PIDOUT_Label, buf);
         snprintf(buf, sizeof(buf), "%05.4f", g_Vout);
         lv_label_set_text(DEBUG_VOUT_Label, buf);
         snprintf(buf, sizeof(buf), "%05.4f", new_voltage);
         lv_label_set_text(DEBUG_NEWVOUT_Label, buf);
-        snprintf(buf, sizeof(buf), "%05.4lu", dacv);
+        snprintf(buf, sizeof(buf), "%05.4hu", (uint16_t)vout_dac_value);
         lv_label_set_text(DEBUG_DACV_Label, buf);
-        // 可能是问题所在，new_voltage是pidout+设定值限幅，pidout+设定值可能会累加，导致最终到达限幅，理论上pid_out的值会很大，需实际观察pid_out输出
-        // libo
 
     }
     else
     {
-        // PID 未启用，仍允许用户手动以设定值直接输出（需求是 RECOVER_KEY 时启动 PID 并输出设定电压）
-        // 如果你希望按键直接生效可以取消注释：
-        // uint32_t dacv = voltage_to_dac(V_setpoint);
-        // dac_write_voltage(dacv);
-        ;
+
     }
 
     if (current_pid_enabled)
     {
         float pid_out_i = IPID_realize(I_setpoint, g_Iout);
-        pidi.SetCurrent += pid_out_i;
-        pidi.SetCurrent = clampf(pidi.SetCurrent, 0.0f, MAX_CURRENT);
-        uint32_t daci = current_to_dac(pidi.SetCurrent);
+        // 对于增量式PID，output字段已经是实际的输出电流值
+        uint32_t daci = current_to_dac(pidi.output);
         dac_write_current(daci);
     }
     else

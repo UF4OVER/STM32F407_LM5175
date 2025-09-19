@@ -24,9 +24,6 @@ extern DAC_HandleTypeDef hdac;
 #define DEFAULT_V_SET 5.0f
 #define DEFAULT_I_SET 2.0f
 
-// 调速周期（ms）
-// #define CONTROL_PERIOD_MS 100 // 100ms 控制周期 建议为10ms libo2
-
 // 空载判定阈值（A）
 #define NOLOAD_CURRENT_THRESHOLD 0.05f
 

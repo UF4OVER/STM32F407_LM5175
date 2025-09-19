@@ -35,7 +35,7 @@ typedef struct {
     float ActualVoltage;
 
     float Kp, Ki, Kd;
-    float err, err_last;
+    float err, err_last, err_llast;  // 增加err_llast用于增量式PID
     float integral;
     float derivative;
     float output;
@@ -52,7 +52,7 @@ typedef struct {
     float ActualCurrent;
 
     float Kp, Ki, Kd;
-    float err, err_last;
+    float err, err_last, err_llast;  // 增加err_llast用于增量式PID
     float integral;
     float derivative;
     float output;
