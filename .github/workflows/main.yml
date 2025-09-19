@@ -5,6 +5,8 @@ on:
   push:
     branches:
         -master
+    tag:
+        - 'V* 
 
 jobs:
   build:
