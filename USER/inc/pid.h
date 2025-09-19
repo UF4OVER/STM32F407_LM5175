@@ -17,9 +17,9 @@
 #define PID_I_D 0
 
 // PID输出限幅值
-#define PID_OUTPUT_MAX  100000.0f
-#define PID_OUTPUT_MIN -100000.0f
-#define INTEGRAL_MAX    100000.0f
+#define PID_OUTPUT_MAX  100.0f
+#define PID_OUTPUT_MIN -100.0f
+#define INTEGRAL_MAX    100.0f
 
 #define D_FILTER_ALPHA 0.2f
 
@@ -35,7 +35,7 @@ typedef struct {
     float ActualVoltage;
 
     float Kp, Ki, Kd;
-    float err, err_last, err_llast;  // 增加err_llast用于增量式PID
+    float err, err_last, err_llast;
     float integral;
     float derivative;
     float output;
