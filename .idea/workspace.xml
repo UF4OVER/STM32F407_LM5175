@@ -23,7 +23,8 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="build: 更新构建配置和工作区设置&#10;&#10;- 移除了 main.c 中不再使用的 ui_DEFAULT.h 头文件">
+    <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="build: 过CI">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -88,29 +89,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;CMake 应用程序.STM32F407_LM5175.elf.executor&quot;: &quot;Run&quot;,
-    &quot;CMake 应用程序.STM32F407_LM5175.executor&quot;: &quot;Run&quot;,
-    &quot;OpenOCD 下载并运行.STM32F407_LM5175.elf.executor&quot;: &quot;Run&quot;,
-    &quot;Python.init.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;last_opened_file_path&quot;: &quot;E:/c_project/STM32F407_LM5175/GUI/APP/fonts&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.fonts.default&quot;,
-    &quot;structure.view.defaults.are.configured&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "CMake 应用程序.STM32F407_LM5175.elf.executor": "Run",
+    "CMake 应用程序.STM32F407_LM5175.executor": "Run",
+    "OpenOCD 下载并运行.STM32F407_LM5175.elf.executor": "Run",
+    "Python.init.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "E:/c_project/STM32F407_LM5175/GUI/APP/fonts",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "CPPToolchains",
+    "structure.view.defaults.are.configured": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="E:\c_project\STM32F407_LM5175\GUI\APP\fonts" />
@@ -197,7 +198,7 @@
       <workItem from="1758202353136" duration="130000" />
       <workItem from="1758202492684" duration="8387000" />
       <workItem from="1758247208982" duration="22918000" />
-      <workItem from="1758274612014" duration="626000" />
+      <workItem from="1758274612014" duration="2942000" />
     </task>
     <task id="LOCAL-00001" summary="refactor(电源控制): 重构电源控制代码&#10;&#10;- 修改 DAC 输出配置，禁用输出缓冲&#10;- 添加DAC测试最小DEMO，测试合理输出合理&#10;- 实现设定值编辑功能&#10;- 更新控制逻辑，使用定时器回调">
       <option name="closed" value="true" />
@@ -295,7 +296,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758274938643</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="build: 过CI">
+      <option name="closed" value="true" />
+      <created>1758275527430</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1758275527430</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -340,7 +349,8 @@
     <MESSAGE value="feat(pid): 实现电压和电流环的 PID 控制&#10;&#10;-重构了 PID 控制算法，增加了积分抗饱和和输出限幅功能&#10;- 添加了通过 USB CDC接口更新 PID 参数的功能&#10;- 实现了 VOFA 数据格式的发送&#10;- 优化了控制定时器回调函数，集成了 CDC 数据处理和 VOFA 数据发送" />
     <MESSAGE value="refactor(pid): 调整 PID 输出限幅值和积分最大值&#10;&#10;- 将 PID_OUTPUT_MAX 从 100000.0f 修改为 100.0f&#10;-将 PID_OUTPUT_MIN 从 -100000.0f 修改为 -100.0f&#10;- 将 INTEGRAL_MAX 从 100000.0f 修改为100.0f" />
     <MESSAGE value="build: 更新构建配置和工作区设置&#10;&#10;- 移除了 main.c 中不再使用的 ui_DEFAULT.h 头文件" />
-    <option name="LAST_COMMIT_MESSAGE" value="build: 更新构建配置和工作区设置&#10;&#10;- 移除了 main.c 中不再使用的 ui_DEFAULT.h 头文件" />
+    <MESSAGE value="build: 过CI" />
+    <option name="LAST_COMMIT_MESSAGE" value="build: 过CI" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
