@@ -1,0 +1,36 @@
+
+name: Build and Release STM32F407
+
+on:
+  push:
+    tags:
+      - 'v*'   # 打 tag 时触发，如 v1.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi cmake ninja-build
+
+      - name: Configure CMake
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build firmware
+        run: cmake --build build --config Release
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/STM32F407_LM5175.elf
+            build/STM32F407_LM5175.hex
+            build/STM32F407_LM5175.bin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
