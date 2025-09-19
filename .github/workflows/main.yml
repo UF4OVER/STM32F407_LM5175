@@ -3,8 +3,8 @@ name: Build and Release STM32F407
 
 on:
   push:
-    tags:
-      - 'v*'   # 打 tag 时触发，如 v1.0.0
+    branches:
+        -master
 
 jobs:
   build:
