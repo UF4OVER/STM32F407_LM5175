@@ -34,7 +34,6 @@
 #include "st7789.h"
 #include "uf4power.h"
 #include "ui.h"
-#include "ui_DEFAULT.h"
 #include "usbd_cdc_if.h" // 里面有 CDC_Transmit_FS
 #include "ui_const.h"
 #include <stdio.h>       // 重定向 printf

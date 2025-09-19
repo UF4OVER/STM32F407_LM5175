@@ -23,12 +23,11 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="feat(pid): 实现电压和电流环的 PID 控制&#10;&#10;-重构了 PID 控制算法，增加了积分抗饱和和输出限幅功能&#10;- 添加了通过 USB CDC接口更新 PID 参数的功能&#10;- 实现了 VOFA 数据格式的发送&#10;- 优化了控制定时器回调函数，集成了 CDC 数据处理和 VOFA 数据发送">
+    <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="build: 更新构建配置和工作区设置&#10;&#10;- 移除了 main.c 中不再使用的 ui_DEFAULT.h 头文件">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/USER/inc/pid.h" beforeDir="false" afterPath="$PROJECT_DIR$/USER/inc/pid.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/STM32F407_LM5175.bin" beforeDir="false" afterPath="$PROJECT_DIR$/build/STM32F407_LM5175.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/STM32F407_LM5175.elf" beforeDir="false" afterPath="$PROJECT_DIR$/build/STM32F407_LM5175.elf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build/STM32F407_LM5175.hex" beforeDir="false" afterPath="$PROJECT_DIR$/build/STM32F407_LM5175.hex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Core/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/main.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GUI/APP/ui.c" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/APP/ui.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/USER/src/uf4power.c" beforeDir="false" afterPath="$PROJECT_DIR$/USER/src/uf4power.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -168,8 +167,8 @@
     </configuration>
     <list>
       <item itemvalue="CMake 应用程序.STM32F407_LM5175.elf" />
-      <item itemvalue="Python.init" />
       <item itemvalue="OpenOCD 下载并运行.STM32F407_LM5175.elf" />
+      <item itemvalue="Python.init" />
     </list>
     <recent_temporary>
       <list>
@@ -196,7 +195,7 @@
       <workItem from="1758202353136" duration="130000" />
       <workItem from="1758202492684" duration="8387000" />
       <workItem from="1758247208982" duration="22918000" />
-      <workItem from="1758274612014" duration="6000" />
+      <workItem from="1758274612014" duration="317000" />
     </task>
     <task id="LOCAL-00001" summary="refactor(电源控制): 重构电源控制代码&#10;&#10;- 修改 DAC 输出配置，禁用输出缓冲&#10;- 添加DAC测试最小DEMO，测试合理输出合理&#10;- 实现设定值编辑功能&#10;- 更新控制逻辑，使用定时器回调">
       <option name="closed" value="true" />
@@ -270,7 +269,23 @@
       <option name="project" value="LOCAL" />
       <updated>1758273048369</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="refactor(pid): 调整 PID 输出限幅值和积分最大值&#10;&#10;- 将 PID_OUTPUT_MAX 从 100000.0f 修改为 100.0f&#10;-将 PID_OUTPUT_MIN 从 -100000.0f 修改为 -100.0f&#10;- 将 INTEGRAL_MAX 从 100000.0f 修改为100.0f">
+      <option name="closed" value="true" />
+      <created>1758274667510</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1758274667510</updated>
+    </task>
+    <task id="LOCAL-00011" summary="refactor(pid): 调整 PID 输出限幅值和积分最大值&#10;&#10;- 将 PID_OUTPUT_MAX 从 100000.0f 修改为 100.0f&#10;-将 PID_OUTPUT_MIN 从 -100000.0f 修改为 -100.0f&#10;- 将 INTEGRAL_MAX 从 100000.0f 修改为100.0f">
+      <option name="closed" value="true" />
+      <created>1758274686942</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1758274686942</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -292,7 +307,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="master" />
+                        <option value="origin/master" />
                       </list>
                     </value>
                   </entry>
@@ -313,7 +328,9 @@
     <MESSAGE value="QQQ" />
     <MESSAGE value="refactor(电源): 重构电源管理系统&#10;&#10;- 修改了多个文件以优化电源管理逻辑&#10;- 更新了 DAC 配置，启用了输出缓冲&#10;- 调整了 GPIO 配置，移除了 FAN_PWM 相关代码&#10;- 重构了 main 函数，增加了控制定时器和调试模式支持- 更新了 PID 控制参数，并添加了宏定义" />
     <MESSAGE value="feat(pid): 实现电压和电流环的 PID 控制&#10;&#10;-重构了 PID 控制算法，增加了积分抗饱和和输出限幅功能&#10;- 添加了通过 USB CDC接口更新 PID 参数的功能&#10;- 实现了 VOFA 数据格式的发送&#10;- 优化了控制定时器回调函数，集成了 CDC 数据处理和 VOFA 数据发送" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(pid): 实现电压和电流环的 PID 控制&#10;&#10;-重构了 PID 控制算法，增加了积分抗饱和和输出限幅功能&#10;- 添加了通过 USB CDC接口更新 PID 参数的功能&#10;- 实现了 VOFA 数据格式的发送&#10;- 优化了控制定时器回调函数，集成了 CDC 数据处理和 VOFA 数据发送" />
+    <MESSAGE value="refactor(pid): 调整 PID 输出限幅值和积分最大值&#10;&#10;- 将 PID_OUTPUT_MAX 从 100000.0f 修改为 100.0f&#10;-将 PID_OUTPUT_MIN 从 -100000.0f 修改为 -100.0f&#10;- 将 INTEGRAL_MAX 从 100000.0f 修改为100.0f" />
+    <MESSAGE value="build: 更新构建配置和工作区设置&#10;&#10;- 移除了 main.c 中不再使用的 ui_DEFAULT.h 头文件" />
+    <option name="LAST_COMMIT_MESSAGE" value="build: 更新构建配置和工作区设置&#10;&#10;- 移除了 main.c 中不再使用的 ui_DEFAULT.h 头文件" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

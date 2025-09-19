@@ -6,8 +6,6 @@
 #include "pid.h"
 
 #include "ina226.h"
-#include "ui_DEFAULT.h"
-#include "ui_DEBUG.h"
 #include "ui_const.h"
 #include "usbd_cdc_if.h"
 #include <math.h>

@@ -4,7 +4,6 @@
 // Project name: SquareLine_Project
 
 #include "ui.h"
-#include "ui_helpers.h"
 #include "core/lv_obj.h"
 
 ///////////////////// VARIABLES ////////////////////
