@@ -24,10 +24,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3fee6b4d-7523-40a1-81dd-9f63cc768044" name="更改" comment="build: 更新构建配置和工作区设置&#10;&#10;- 移除了 main.c 中不再使用的 ui_DEFAULT.h 头文件">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/Src/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/Core/Src/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/GUI/APP/ui.c" beforeDir="false" afterPath="$PROJECT_DIR$/GUI/APP/ui.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/USER/src/uf4power.c" beforeDir="false" afterPath="$PROJECT_DIR$/USER/src/uf4power.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -130,6 +127,11 @@
     </key>
   </component>
   <component name="RunManager" selected="OpenOCD 下载并运行.STM32F407_LM5175.elf">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="STM32F407_LM5175.elf" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="STM32F407_LM5175" TARGET_NAME="STM32F407_LM5175.elf" CONFIG_NAME="Debug-MinGW-stm32" RUN_TARGET_PROJECT_NAME="STM32F407_LM5175" RUN_TARGET_NAME="STM32F407_LM5175.elf">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -195,7 +197,7 @@
       <workItem from="1758202353136" duration="130000" />
       <workItem from="1758202492684" duration="8387000" />
       <workItem from="1758247208982" duration="22918000" />
-      <workItem from="1758274612014" duration="317000" />
+      <workItem from="1758274612014" duration="626000" />
     </task>
     <task id="LOCAL-00001" summary="refactor(电源控制): 重构电源控制代码&#10;&#10;- 修改 DAC 输出配置，禁用输出缓冲&#10;- 添加DAC测试最小DEMO，测试合理输出合理&#10;- 实现设定值编辑功能&#10;- 更新控制逻辑，使用定时器回调">
       <option name="closed" value="true" />
@@ -285,7 +287,15 @@
       <option name="project" value="LOCAL" />
       <updated>1758274686942</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="build: 更新构建配置和工作区设置&#10;&#10;- 移除了 main.c 中不再使用的 ui_DEFAULT.h 头文件">
+      <option name="closed" value="true" />
+      <created>1758274938643</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1758274938643</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -307,7 +317,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/master" />
+                        <option value="master" />
                       </list>
                     </value>
                   </entry>

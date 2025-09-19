@@ -4,8 +4,8 @@
 
 #ifndef STM32F407_LM5175_UI_CONST_H
 #define STM32F407_LM5175_UI_CONST_H
-#include "ui_DEFAULT.h"
-#include "ui_DEBUG.h"
+#include "screens/ui_DEFAULT.h"
+#include "screens/ui_DEBUG.h"
 
 #define VoutLabel ui_Label8
 #define IoutLabel ui_Label11

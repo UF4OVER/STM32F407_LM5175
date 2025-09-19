@@ -65,7 +65,7 @@ include_directories(Core/Inc
         GUI/examples/porting
 #        GUI/demos/benchmark
         GUI/APP
-        GUI/APP/screens
+#        GUI/APP/screens
         )
 
 
