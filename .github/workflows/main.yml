@@ -4,10 +4,7 @@ name: Build and Release STM32F407
 on:
   push:
     branches:
-        -master
-    tag:
-        - 'V* 
-
+        - master
 jobs:
   build:
     runs-on: ubuntu-latest
