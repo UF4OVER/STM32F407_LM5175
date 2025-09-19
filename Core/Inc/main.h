@@ -88,8 +88,6 @@ void Error_Handler(void);
 #define KEY_1_Pin GPIO_PIN_14
 #define KEY_1_GPIO_Port GPIOD
 #define KEY_1_EXTI_IRQn EXTI15_10_IRQn
-#define FAN_PWM_Pin GPIO_PIN_1
-#define FAN_PWM_GPIO_Port GPIOD
 #define LCD_BLK_Pin GPIO_PIN_4
 #define LCD_BLK_GPIO_Port GPIOD
 #define LCD_CS_Pin GPIO_PIN_5

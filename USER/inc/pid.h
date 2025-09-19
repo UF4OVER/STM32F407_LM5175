@@ -7,6 +7,15 @@
 
 #include "main.h"
 
+
+#define PID_V_P 1
+#define PID_V_I 0
+#define PID_V_D 0
+
+#define PID_I_P 1
+#define PID_I_I 0
+#define PID_I_D 0
+
 typedef struct
 {
     float SetVoltage;	  	//定义设定值

@@ -4,6 +4,7 @@
 
 #include "pid.h"
 #include "stdio.h"
+#include "uf4power.h"
 
 pid_v pidv;
 pid_i pidi;
@@ -12,30 +13,30 @@ pid_i pidi;
 void VPID_init()
 {
     printf("PID_init begin \n");
-    pidv.SetVoltage = 5.0;    // 设定的预期电压值，默认12V
+    pidv.SetVoltage = DEFAULT_V_SET;    // 设定的预期电压值，默认12V
     pidv.ActualVoltage = 0.0; // adc实际电压值
     pidv.err = 0.0;           // 当前次实际与理想的偏差
     pidv.err_last = 0.0;      // 上一次的偏差
     pidv.voltage = 0.0;       // 控制电压值
     pidv.integral = 0.0;      // 积分值
-    pidv.Kp = 0.2;  // 1 //参考：将pid的参数初始从1,0,0开始，先P。位置式pid一般不用i，调pd即可，d参考实际，可不调 libo3
+    pidv.Kp = PID_V_P;  // 1 //参考：将pid的参数初始从1,0,0开始，先P。位置式pid一般不用i，调pd即可，d参考实际，可不调 libo3
                     // pid参数最好传出，以宏定义的形式修改
-    pidv.Ki = 0.15; // 积分系数
-    pidv.Kd = 0.2;  // 微分系数
+    pidv.Ki = PID_V_I; // 积分系数
+    pidv.Kd = PID_V_D;  // 微分系数
     printf("vPID_init end \n");
 }
 void IPID_init()
 {
     printf("PID_init begin \n");
-    pidi.SetCurrent = 2.0; // 设定的预期电流值
+    pidi.SetCurrent = DEFAULT_I_SET; // 设定的预期电流值
     pidi.ActualCurrent = 0.0;
     pidi.current = 0.0;  // 输出电流值
     pidi.err = 0.0;      // 当前次实际与理想的偏差
     pidi.err_last = 0.0; // 上一次的偏差
     pidi.integral = 0.0; // 积分值
-    pidi.Kp = 0.2;
-    pidi.Ki = 0.15;
-    pidi.Kd = 0.2;
+    pidi.Kp = PID_I_P;
+    pidi.Ki = PID_I_I;
+    pidi.Kd = PID_I_D;
     printf("iPID_init end \n");
 }
 

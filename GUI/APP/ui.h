@@ -18,7 +18,8 @@ extern "C" {
 
 ///////////////////// SCREENS ////////////////////
 
-#include "screens/ui_Screen1.h"
+#include "screens/ui_DEFAULT.h"
+#include "screens/ui_DEBUG.h"
 
 ///////////////////// VARIABLES ////////////////////
 
@@ -26,9 +27,6 @@ extern "C" {
 // EVENTS
 
 extern lv_obj_t * ui____initial_actions0;
-
-// FONTS
-LV_FONT_DECLARE(ui_font_);
 
 // UI INIT
 void ui_init(void);

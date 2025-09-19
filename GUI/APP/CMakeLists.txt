@@ -1,7 +1,7 @@
-SET(SOURCES screens/ui_Screen1.c
+SET(SOURCES screens/ui_DEFAULT.c
+    screens/ui_DEBUG.c
     ui.c
     components/ui_comp_hook.c
-    ui_helpers.c
-)
+    ui_helpers.c)
 
 add_library(ui ${SOURCES})

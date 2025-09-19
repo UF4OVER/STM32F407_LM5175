@@ -423,11 +423,11 @@ __weak void HAL_DAC_MspDeInit(DAC_HandleTypeDef *hdac)
   */
 
 /**
-  * @brief  启用DAC并开始通道转换。
-  * @param  hdac DAC_HandleTypeDef指向包含
-  *         指定 DAC 的配置信息。
-  * @param  Channel 选定的 DAC 通道。
-  *          此参数可以是以下值之一：
+  * @brief  Enables DAC and starts conversion of channel.
+  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  *         the configuration information for the specified DAC.
+  * @param  Channel The selected DAC channel.
+  *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected
   * @retval HAL status
@@ -782,19 +782,19 @@ void HAL_DAC_IRQHandler(DAC_HandleTypeDef *hdac)
 }
 
 /**
-  * @brief  设置DAC通道的指定数据保持寄存器值。
-  * @param  hdac DAC_HandleTypeDef指向包含
-  *         指定 DAC 的配置信息。
-  * @param  Channel 选定的 DAC 通道。
-  *          此参数可以是以下值之一：
+  * @brief  Set the specified data holding register value for DAC channel.
+  * @param  hdac pointer to a DAC_HandleTypeDef structure that contains
+  *         the configuration information for the specified DAC.
+  * @param  Channel The selected DAC channel.
+  *          This parameter can be one of the following values:
   *            @arg DAC_CHANNEL_1: DAC Channel1 selected
   *            @arg DAC_CHANNEL_2: DAC Channel2 selected
   * @param  Alignment Specifies the data alignment.
-  *          此参数可以是以下值之一：
+  *          This parameter can be one of the following values:
   *            @arg DAC_ALIGN_8B_R: 8bit right data alignment selected
-  *            @arg DAC_ALIGN_12B_L: 选择 12 位左数据对齐
-  *            @arg DAC_ALIGN_12B_R: 选择 12 位右数据对齐
-  * @param  Data 要加载到所选数据保持寄存器中的数据。
+  *            @arg DAC_ALIGN_12B_L: 12bit left data alignment selected
+  *            @arg DAC_ALIGN_12B_R: 12bit right data alignment selected
+  * @param  Data Data to be loaded in the selected data holding register.
   * @retval HAL status
   */
 HAL_StatusTypeDef HAL_DAC_SetValue(DAC_HandleTypeDef *hdac, uint32_t Channel, uint32_t Alignment, uint32_t Data)

@@ -7,7 +7,7 @@
 #include "main.h"
 #include "misc/lv_anim.h"
 #include "core/lv_obj.h"
-#include "ui_Screen1.h"
+#include "ui_DEFAULT.h"
 
 /* USER CODE BEGIN 4 */
 
